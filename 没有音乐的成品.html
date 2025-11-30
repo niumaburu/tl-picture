@@ -1,0 +1,409 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+	<title>滕林老师帅照合集</title>
+	<meta charset="UTF-8">
+	<meta name="Author" content="只会切图的前端">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		/* 原有样式完全保留 */
+		html, body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			font-family: 'Poppins', sans-serif;
+		}
+
+		.main-interface {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+
+		#main-bg-video {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			z-index: -1;
+		}
+
+		#container {
+			position: relative;
+			z-index: 2;
+		}
+
+		.element {
+			width: 140px;
+			height: 140px;
+			cursor: pointer;
+			box-shadow: 0px 0px 12px rgba(23, 19, 5, 0.5);
+			border: 2px solid #fff;
+			text-align: center;
+		}
+
+		.element:hover {
+			box-shadow: 0px 0px 12px rgba(11, 250, 250, 0.85);
+			border: 2px solid rgba(127, 255, 255, 0.85);
+		}
+
+		.element img {
+			width: 100%;
+			height: 100%;
+		}
+
+		.second-interface {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100vh;
+			display: none;
+			z-index: 100;
+			background: #000;
+			flex-direction: row;
+		}
+
+		.video-wrapper {
+			flex: 0 0 70%;
+			height: 100vh;
+			position: relative;
+			overflow: hidden;
+		}
+
+		#second-bg-video {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			min-width: 100%;
+			min-height: 100%;
+			transition: transform 0.3s ease;
+		}
+
+		.text-container {
+			flex: 1;
+			height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 40px;
+			background: rgba(0, 0, 0, 0.9);
+			z-index: 2;
+		}
+
+		.text-content {
+			color: white;
+			font-size: 2em;
+			line-height: 1.8;
+			text-align: center;
+			animation: fadeInOut 2s infinite;
+		}
+
+		/* 新增第三个界面样式 */
+		.third-interface {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: none;
+			background: #000;
+			z-index: 101;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.third-interface img {
+			max-width: 90%;
+			max-height: 90%;
+			object-fit: contain;
+			border: 2px solid #fff;
+			box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+			transition: transform 0.15s ease-out;
+			transform-origin: center center;
+		}
+
+		@keyframes fadeInOut {
+			0%, 100% { opacity: 0.8; }
+			50% { opacity: 1; }
+		}
+	</style>
+</head>
+
+<body>
+	<!-- 主界面 -->
+	<div class="main-interface">
+		<video autoplay muted loop id="main-bg-video">
+			<source src="F:/diy/tl照片墙/tl500/0313.mp4" type="video/mp4">
+		</video>
+		<div id="container"></div>
+		<audio loop id="bgm">
+			<source src="music/background.mp3" type="audio/mpeg">
+		</audio>
+		</div>
+	</div>
+
+	<!-- 第二个界面 -->
+	<div class="second-interface">
+		<div class="video-wrapper">
+			<video autoplay muted loop id="second-bg-video">
+				<source src="F:/diy/彼岸花/彼岸花/66666.mp4" type="video/mp4">
+			</video>
+		</div>
+		<div class="text-container">
+			<div class="text-content">
+				如果在18我没能送你花<br>
+				在28我请你喝酒吧
+			</div>
+		</div>
+	</div>
+
+	<!-- 第三个界面 -->
+	<div class="third-interface">
+		<img src="F:/diy/tl照片墙/tl500/tl1.png" alt="滕林老师特别帅照">
+	</div>
+
+	<script src="js/three.min.js"></script>
+	<script src="js/tween.min.js"></script>
+	<script src="js/TrackballControls.js"></script>
+	<script src="js/CSS3DRenderer.js"></script>
+
+	<script>
+		// 初始化变量
+		let animationId;
+		let currentInterface = 1;
+		let isPhotoWallActive = true;
+		let musicDom = document.getElementById("bgm");
+		let picArr = [];
+
+		// 第二界面缩放控制
+		let scale = 1;
+		const video = document.getElementById('second-bg-video');
+		const minScale = 0.5;
+		const maxScale = 3;
+		
+		// 第三界面缩放控制
+		let imgScale = 1;
+		const thirdImg = document.querySelector('.third-interface img');
+		const imgMinScale = 0.5;
+		const imgMaxScale = 5;
+
+		// 照片墙初始化
+		for (let i = 0; i < 500; i++) {
+			picArr.push({ url: "img/" + i + ".jpg" });
+		}
+
+
+		let table = [];
+		for (let i = 0; i < picArr.length; i++) {
+			table[i] = {};
+			if (i < picArr.length) {
+				table[i] = picArr[i];
+			}
+			table[i].p_x = i % 20 + 1;
+			table[i].p_y = Math.floor(i / 20) + 1;
+		}
+
+		//场景（scene）、相机（camera）和渲染器（renderer），这样我们就能透过摄像机渲染出场景
+		let camera, scene, renderer;
+		let controls;
+		let objects = [];
+		let targets = [];
+
+		init();
+		animate();
+
+
+		function init() {
+			//透视相机
+			camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+			camera.position.z = 3000;
+			//创建一个新的场景对象。
+			scene = new THREE.Scene();
+
+			for (let i = 0; i < table.length; i++) {
+				//创建dom元素
+				let dom = document.createElement('div');
+				dom.className = 'element';
+				let img = document.createElement('img');
+				img.src = table[i].url;
+				dom.appendChild(img);
+
+				let object = new THREE.CSS3DObject(dom);
+				object.position.x = Math.random() * 4000 - 2000;
+				object.position.y = Math.random() * 4000 - 2000;
+				object.position.z = Math.random() * 4000 - 2000;
+				scene.add(object);
+				objects.push(object);
+			}
+			//三维向量
+			let vector = new THREE.Vector3();
+			//球坐标
+			let spherical = new THREE.Spherical();
+
+			for (let i = 0, l = objects.length; i < l; i++) {
+				let phi = Math.acos(-1 + (2 * i) / l);
+				let theta = Math.sqrt(l * Math.PI) * phi;
+				//这是Three.js中大部分对象的基类，提供了一系列的属性和方法来对三维空间中的物体进行操纵。
+				let object = new THREE.Object3D();
+				spherical.set(1400, phi, theta);
+				object.position.setFromSpherical(spherical);
+				vector.copy(object.position).multiplyScalar(2);
+				object.lookAt(vector);
+				targets.push(object);
+			}
+			//CSS3DRenderer用于通过CSS3的transform属性， 将层级的3D变换应用到DOM元素上
+			renderer = new THREE.CSS3DRenderer();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.domElement.style.position = 'absolute';
+			document.getElementById('container').appendChild(renderer.domElement);
+			// 鼠标控制
+			controls = new THREE.TrackballControls(camera, renderer.domElement);
+			controls.rotateSpeed = 0.5;//旋转的速度
+			controls.minDistance = 500;//够将相机向内移动多少
+			controls.maxDistance = 6000;//将相机向外移动多少
+			controls.addEventListener('change', render);
+			transform();
+			//窗口大小变化事件
+			window.addEventListener('resize', onWindowResize, false);
+		}
+
+		// 动画相关函数
+		function transform() {
+			let duration = 2000;
+			TWEEN.removeAll();
+			for (let i = 0; i < objects.length; i++) {
+				let object = objects[i];
+				let target = targets[i];
+
+				new TWEEN.Tween(object.position)
+					.to({ x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration)
+					.easing(TWEEN.Easing.Exponential.InOut)
+					.start();
+
+				new TWEEN.Tween(object.rotation)
+					.to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration)
+					.easing(TWEEN.Easing.Exponential.InOut)
+					.start();
+			}
+			new TWEEN.Tween(this)
+				.to({}, duration * 2)
+				.onUpdate(render)
+				.start();
+		}
+
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			render();
+		}
+
+		function animate() {
+			animationId = requestAnimationFrame(animate);
+			scene.rotation.y += 0.001;
+			TWEEN.update();
+			controls.update();
+			render();
+		}
+
+
+		function render() {
+			renderer.render(scene, camera);
+		}
+
+			// 事件监听
+		document.addEventListener('keydown', function(event) {
+			if (event.key === 'ArrowRight') {
+				if (currentInterface === 1) switchToInterface(2);
+				else if (currentInterface === 2) switchToInterface(3);
+			} else if (event.key === 'ArrowLeft') {
+				if (currentInterface === 2) switchToInterface(1);
+				else if (currentInterface === 3) switchToInterface(2);
+			}
+		});
+
+
+		// 界面切换函数
+		function switchToInterface(target) {
+			document.querySelectorAll('.main-interface, .second-interface, .third-interface')
+				.forEach(el => el.style.display = 'none');
+
+			switch(target) {
+				case 1:
+					document.querySelector('.main-interface').style.display = 'block';
+					controls.enabled = true;
+					musicDom.play();
+					animate();
+					break;
+				case 2:
+					document.querySelector('.second-interface').style.display = 'flex';
+					controls.enabled = false;
+					musicDom.pause();
+					cancelAnimationFrame(animationId);
+					resetVideoScale();
+					break;
+				case 3:
+					document.querySelector('.third-interface').style.display = 'flex';
+					controls.enabled = false;
+					musicDom.pause();
+					cancelAnimationFrame(animationId);
+					resetImageScale();
+					break;
+			}
+			currentInterface = target;
+		}
+
+		
+		
+		// 缩放控制函数
+		function resetVideoScale() {
+			scale = 1;
+			video.style.transform = `translate(-50%, -50%) scale(${scale})`;
+		}
+
+		function resetImageScale() {
+			imgScale = 1;
+			thirdImg.style.transform = 'scale(1)';
+			thirdImg.style.transformOrigin = 'center center';
+		}
+
+	
+
+		document.addEventListener('wheel', function(e) {
+			e.preventDefault();
+			
+			// 第二界面缩放
+			if (currentInterface === 2) {
+				const delta = e.deltaY > 0 ? 0.9 : 1.1;
+				scale = Math.min(maxScale, Math.max(minScale, scale * delta));
+				video.style.transform = `translate(-50%, -50%) scale(${scale})`;
+			}
+			// 第三界面缩放
+			else if (currentInterface === 3) {
+				const delta = e.deltaY > 0 ? 0.9 : 1.1;
+				imgScale = Math.min(imgMaxScale, Math.max(imgMinScale, imgScale * delta));
+				
+				// 计算缩放中心
+				const rect = thirdImg.getBoundingClientRect();
+				const offsetX = e.clientX - rect.left;
+				const offsetY = e.clientY - rect.top;
+				const originX = (offsetX / rect.width) * 100;
+				const originY = (offsetY / rect.height) * 100;
+				
+				thirdImg.style.transformOrigin = `${originX}% ${originY}%`;
+				thirdImg.style.transform = `scale(${imgScale})`;
+			}
+		});
+
+	
+	</script>
+</body>
+</html>
